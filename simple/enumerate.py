@@ -11,9 +11,32 @@ def t_ordered_vars(PotentialsList):
     :param PotentialsList: The list of CPTs
     :returns: The topologically ordered list of nodes
     """
-    # TODO implement function
-    return OrderedNodes
+    node_ids = {}
+    for i in range(len(PotentialsList)):
+        node_name = PotentialsList[i].node.name
+        node_ids[node_name] = i
+    parents_list = [None]*len(node_ids)
+    children_list = [[] for i in range(len(node_ids))]
+    for Potential in PotentialsList:
+        parents = [node_ids[parent.name] for parent in Potential.othernodes]
+        current_id = node_ids[Potential.node.name]
+        parents_list[current_id] = parents
+        for parent in parents:
+            children_list[parent].append(current_id)
 
+    ordered_vars = []
+    parents_dynamic = parents_list[:]
+    free_nodes = {node_ids[Potential.node.name] for Potential in PotentialList 
+                  if not Potential.othernodes}
+    while free_nodes:
+        free_node = free_nodes.pop()
+        for child in children_list[free_node]:
+            parents_dynamic[child].remove(free_node)
+            if not parents_dynamic[child]:
+                free_nodes.add(child)
+        ordered_vars.append(free_node)
+    return ordered_vars
+        
 def enumeration_ask(query, evidence):
     """ 
   Artificial Intelligence A Modern Approach (3rd Edition): Figure 14.9, page
@@ -36,6 +59,7 @@ def enumeration_ask(query, evidence):
     :returns: a distribution over query variables
     """
     # TODO implement function
+    distribution = []
     return distribution
 
 def enumerate_all(variables, evidence):
@@ -60,10 +84,12 @@ def enumerate_all(variables, evidence):
   multiple variables. <br>
     """
     # TODO implement function
+    val = 0
     return val
 
 if __name__ == "__main__":
     NodeList, PotentialList = netlog('./asia.net')
-    for Node in NodeList:
-        print(Node.name)
-        print(Node.states)
+    # for Node in NodeList:
+    #     print(Node.name)
+    #     print(Node.states)
+    print(t_ordered_vars(PotentialList))

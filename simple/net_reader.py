@@ -28,6 +28,7 @@ def netlog(inputfilepath):
         NodeList.append(parseNode(nodematch.group(1),nodematch.group(2)))
     for potentialmatch in potentialregex.finditer(netcode):
         PotentialList.append(parsePotential(potentialmatch.groups()))
+    make_references(NodeList, PotentialList)
     return (NodeList,PotentialList)
 
 def parseNode(name,body):
@@ -115,6 +116,14 @@ def findnode(name,nodes):
             break
     return output
 
+def make_references(nodes, potentials):
+    for potential in potentials:
+        potential.node = findnode(potential.node, nodes)
+        othernodes = []
+        for node in potential.othernodes:
+            othernodes.append(findnode(node, nodes))
+        potential.othernodes = othernodes
+
 def cartesian (lists):
     if lists == []: return [()]
     return [x + (y,) for x in cartesian(lists[:-1]) for y in lists[-1]]
@@ -130,8 +139,12 @@ if __name__ == "__main__":
         print(Node.name)
         print(Node.states)
     for Potential in PotentialList:
-        print(Potential.node)
-        print(Potential.othernodes)
+        print()
+        print(Potential.node.name + ':')
+        if len(Potential.othernodes) > 0:
+            for node in Potential.othernodes:
+                print (node.name, end='\t')
+            print()
         print(Potential.data)
 
 
