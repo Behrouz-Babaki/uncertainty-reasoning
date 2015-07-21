@@ -40,34 +40,9 @@ class BayesNet():
     def __init__(self, Node_List, Potential_List):
         self.nodes = Node_List
         self.potentials = Potential_List
-        self.make_references(self.nodes, self.potentials)
-        self.create_cumulatives(self.nodes, self.potentials)
+        make_references(self.nodes, self.potentials)
+        create_cumulatives(self.nodes, self.potentials)
 
-    def make_references(self, nodes, potentials):
-        for potential in potentials:
-            potential.node = findnode(potential.node, nodes)
-            potential.node.potential = potential
-            othernodes = []
-            for node in potential.othernodes:
-                othernodes.append(findnode(node, nodes))
-            potential.othernodes = othernodes
-
-    def create_cumulatives(self, nodes, potentials):
-        for potential in potentials:
-            num_paretns = len(potential.othernodes)
-            cumuls = [0] * (num_paretns + 1)
-            cumuls[-1] = 1
-            for i in range(num_paretns-1, -1, -1):
-                cumuls[i] = cumuls[i+1] * len(potential.othernodes[i].states)
-            potential.cumulatives = cumuls
-
-    def get_cpt_entry(self, node, node_val, parent_vals):
-        assert(len(parent_vals) == len(node.potential.othernodes))
-        vals = [node_val] + parent_vals
-        index = 0
-        for i in range(len(vals)):
-            index += vals[i] * node.potential.cumulatives[i]
-        return node.potential.data[index]
 
 def findnode(name,nodes):
     output = None
@@ -76,3 +51,33 @@ def findnode(name,nodes):
             output = n
             break
     return output
+
+def get_cpt_entry(node, node_val, parent_vals):
+    assert(len(parent_vals) == len(node.potential.othernodes))
+    vals = [node_val] + parent_vals
+    index = 0
+    for i in range(len(vals)):
+        index += vals[i] * node.potential.cumulatives[i]
+    return float(node.potential.data[index])
+
+def process_bn(nodes, potentials):
+    make_references(nodes, potentials)
+    create_cumulatives(nodes, potentials)
+
+def make_references(nodes, potentials):
+    for potential in potentials:
+        potential.node = findnode(potential.node, nodes)
+        potential.node.potential = potential
+        othernodes = []
+        for node in potential.othernodes:
+            othernodes.append(findnode(node, nodes))
+        potential.othernodes = othernodes
+
+def create_cumulatives(nodes, potentials):
+    for potential in potentials:
+        num_paretns = len(potential.othernodes)
+        cumuls = [0] * (num_paretns + 1)
+        cumuls[-1] = 1
+        for i in range(num_paretns-1, -1, -1):
+            cumuls[i] = cumuls[i+1] * len(potential.othernodes[i].states)
+        potential.cumulatives = cumuls
