@@ -40,7 +40,7 @@ def t_ordered_vars(PotentialsList):
         ordered_vars.append(free_node)
     return ordered_vars
         
-def enumeration_ask(query, evidence):
+def enumeration_ask(bn, var, evidence):
     """ 
   Artificial Intelligence A Modern Approach (3rd Edition): Figure 14.9, page
  525.<br>
@@ -61,9 +61,16 @@ def enumeration_ask(query, evidence):
     :param evidence: the evidence variables
     :returns: a distribution over query variables
     """
-    # TODO implement function
-    distribution = []
-    return distribution
+    potentials = bn.potentials
+    ordered_vars = [potentials[i].node for i in t_ordered_vars(potentials)]
+
+    distribution = [0] * len(var.states)
+    for i in range(len(var.states)):
+        evidence_copy = evidence.copy()
+        evidence_copy[var] = i
+        distribution[i] = enumerate_all(ordered_vars, evidence_copy)
+    normalized = [val/sum(distribution) for val in distribution]
+    return normalized
 
 def enumerate_all(variables, evidence):
     """
@@ -101,11 +108,12 @@ def enumerate_all(variables, evidence):
 
 if __name__ == "__main__":
     nodes, potentials = netlog('./asia.net')
-    process_bn(nodes, potentials)
+    bn = BayesNet(nodes, potentials)
 
     n_asia = findnode('asia', nodes) 
     n_either = findnode('either', nodes)
-    ev = {n_asia : 0, n_either : 0}
+    n_xray = findnode('xray', nodes)
+    ev = {n_xray : 1, n_either : 1}
 
     ordered_vars = [potentials[i].node for i in t_ordered_vars(potentials)]
-    print (enumerate_all(ordered_vars, ev))
+    print (enumeration_ask(bn, n_asia, ev))
