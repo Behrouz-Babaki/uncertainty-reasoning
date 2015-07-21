@@ -11,6 +11,7 @@ from __future__ import print_function
 import sys
 import re
 import argparse
+from bayes_net import Node, Potential, BayesNet, findnode
 
 netregex = re.compile("net[\s\n]*{(\n|.)*}")
 noderegex = re.compile("node\s+([_\w-]+)[\n\s]*{([^}]*)}")
@@ -28,7 +29,6 @@ def netlog(inputfilepath):
         NodeList.append(parseNode(nodematch.group(1),nodematch.group(2)))
     for potentialmatch in potentialregex.finditer(netcode):
         PotentialList.append(parsePotential(potentialmatch.groups()))
-    make_references(NodeList, PotentialList)
     return (NodeList,PotentialList)
 
 def parseNode(name,body):
@@ -80,50 +80,6 @@ def normalizeData(data,nrOfStates):
                 data = list(map(str,data))
     return data
 
-class Node():
-    def __init__(self,_name):
-        self.name = _name
-        self.states = []
-    def nameWithState(self):
-        reverse = list(self.states)
-        reverse.reverse()
-        if self.states in GoodBoolStates:
-            return [self.name, "\+" + self.name]
-        else:
-            reverse = list(self.states)
-            reverse.reverse()
-            if reverse in GoodBoolStates:
-                return ["\+" + self.name, self.name]
-            else:
-                names = list(self.states)
-                for i in range(0,len(names)):
-                    names[i] = self.name + "_" + names[i]
-                return names
-
-class Potential():
-    def __init__(self,node):
-        self.node = node
-        self.othernodes = []
-        self.data = []
-    def dimension(self):
-        return 1 + len(self.othernodes)
-
-def findnode(name,nodes):
-    output = None
-    for n in nodes:
-        if n.name == name:
-            output = n
-            break
-    return output
-
-def make_references(nodes, potentials):
-    for potential in potentials:
-        potential.node = findnode(potential.node, nodes)
-        othernodes = []
-        for node in potential.othernodes:
-            othernodes.append(findnode(node, nodes))
-        potential.othernodes = othernodes
-
 def cartesian (lists):
     if lists == []: return [()]
     return [x + (y,) for x in cartesian(lists[:-1]) for y in lists[-1]]
@@ -134,11 +90,15 @@ if __name__ == "__main__":
     parser.add_argument("input_file", type=str, help="Input .net file")
     args = parser.parse_args()
 
-    NodeList, PotentialList = netlog(args.input_file)
-    for Node in NodeList:
+    nodes, potentials = netlog(args.input_file)
+    my_bn = BayesNet(nodes, potentials)
+
+
+    for Node in my_bn.nodes:
         print(Node.name)
         print(Node.states)
-    for Potential in PotentialList:
+
+    for Potential in my_bn.potentials:
         print()
         print(Potential.node.name + ':')
         if len(Potential.othernodes) > 0:
@@ -146,5 +106,5 @@ if __name__ == "__main__":
                 print (node.name, end='\t')
             print()
         print(Potential.data)
-
+        print(Potential.cumulatives)
 
