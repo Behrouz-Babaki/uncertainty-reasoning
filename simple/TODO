@@ -1,0 +1,16 @@
+* TODO figrue out how sphinx works, and start writing documentation 
+  The documentation should preferably have a reference to the algorithm
+
+* TODO add function 'eliminate_variable'
+  This function updadtes potential, given the node to be removed from
+  it. The main piece is to update the data. 
+
+* TODO add variable elimination function
+  Using the algorithm from Russell & Norvig
+
+* TODO add factor elimination function
+  Using the algorithm from Darwiche's book
+** variations mentioned in Darwiche's book  
+  
+* TODO add junction-tree algorithm
+  Darwiche has a procedural guide which we can use
