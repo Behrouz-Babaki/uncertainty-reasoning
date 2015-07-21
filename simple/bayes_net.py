@@ -54,7 +54,7 @@ def findnode(name,nodes):
 
 def get_cpt_entry(node, node_val, parent_vals):
     assert(len(parent_vals) == len(node.potential.othernodes))
-    vals = [node_val] + parent_vals
+    vals = parent_vals + [node_val]
     index = 0
     for i in range(len(vals)):
         index += vals[i] * node.potential.cumulatives[i]

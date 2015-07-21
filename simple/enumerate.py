@@ -89,44 +89,23 @@ def enumerate_all(variables, evidence):
     if len(variables) == 0:
         return 1.0
     y = variables[0]
-    print ('eval for ' + y.name)
     p_vals = [evidence[parent] for parent in y.potential.othernodes]
     if y in evidence.keys():
-        val = get_cpt_entry(y, evidence[y], p_vals) * enumerate_all(variables[1:], evidence)
-        print (y.name + ' in evidence with value ' + y.states[evidence[y]] 
-               + '. returning ' + str(val))
-        return val
-    print (y.name + ' not in evidence. summing over values:')
+        return get_cpt_entry(y, evidence[y], p_vals) * enumerate_all(variables[1:], evidence)
     val = 0.0
     for i in range(len(y.states)):
-        print('value for ' + y.name + '=' + y.states[i] + ':')
         evidence_copy = evidence.copy()
         evidence_copy[y] = i
-        current_val = get_cpt_entry(y, i, p_vals) * enumerate_all(variables[1:], evidence_copy)
-        print(current_val)
-        val += current_val
+        val += get_cpt_entry(y, i, p_vals) * enumerate_all(variables[1:], evidence_copy)
     return val
 
 if __name__ == "__main__":
     nodes, potentials = netlog('./asia.net')
     process_bn(nodes, potentials)
 
-    ordered_vars = [potentials[i].node for i in t_ordered_vars(potentials)]
-    v_asia = findnode('asia', nodes)
-    v_tub = findnode('tub', nodes)
-    v_smoke = findnode('smoke', nodes)
-    v_either = findnode('either', nodes)
-    v_xray = findnode('xray', nodes)
-    v_lung = findnode('lung', nodes)
-    v_bronc = findnode('bronc', nodes)
-    v_dysp = findnode('dysp', nodes)
-    ev = {v_asia : 1, 
-          v_tub : 0,
-          v_smoke : 1,
-          v_either : 0,
-          v_xray : 0,
-          v_lung : 0,
-          v_bronc : 1
-    }
+    n_asia = findnode('asia', nodes) 
+    n_either = findnode('either', nodes)
+    ev = {n_asia : 0, n_either : 0}
 
+    ordered_vars = [potentials[i].node for i in t_ordered_vars(potentials)]
     print (enumerate_all(ordered_vars, ev))
