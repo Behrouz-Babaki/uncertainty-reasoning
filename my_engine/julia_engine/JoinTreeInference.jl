@@ -5,6 +5,10 @@ export Potential
 export parse_net
 export create_moral_graph
 export triangulate_graph
+export Sepset
+export create_junction_tree
+
+using DataStructures
 
 net_pattern = r"net[\s\n]*{(\n|.)*}"
 node_pattern = r"node\s+([_\w-]+)[\n\s]*{([^}]*)}"
@@ -21,6 +25,14 @@ type Potential
     node::String
     other_nodes::Array{String, 1}
     data::Array{Float64, 1}
+end
+
+type Sepset
+    first::Int64
+    second::Int64
+    nodes::Set{String}
+    mass::Int64
+    cost::Int64
 end
 
 function parse_node(nodematch::RegexMatch)
@@ -204,6 +216,64 @@ function triangulate_graph(node_list::Array{Node,1},
                 potential_list::Array{Potential,1})
     mg = create_moral_graph(node_list, potential_list)
     return triangulate_graph(mg, node_list)
+end
+
+function create_sepsets(clusters, node_list)
+    node_weights = Dict{String, Int64}()
+    for node in node_list
+        node_weights[node.name] = length(node.states)
+    end
+    n = length(clusters)
+    weights = Array{Int64, 1}()
+    for i in 1:n
+        w = 1
+        for v in clusters[i]
+            w *= node_weights[v]
+        end
+        push!(weights, w)
+    end
+    
+    sepsets = Array{Sepset, 1}()
+    for i in 1:n
+        for j in (i+1):n
+            # creat a new sepset
+            nodes = intersect(clusters[i], clusters[j])
+            mass = length(nodes)
+            cost = weights[i] + weights[j]
+            push!(sepsets, Sepset(i, j, nodes, mass, cost))
+        end
+    end
+    
+    sepset_comp(x, y) = (x.mass > y.mass) || ((x.mass == y.mass) && (x.cost < y.cost))
+    return sort(sepsets, lt = sepset_comp)
+end
+
+function create_junction_tree(clusters::Array{Set{String}, 1}, sepsets::Array{Sepset, 1})
+    n = length(clusters)
+    output_tree = Dict{Int, Set{Int}}()
+    for i in 1:n
+        output_tree[i] = Set{Int}()
+    end
+    
+    tree = IntDisjointSets(n)
+    num_edges = 0
+    for sepset in sepsets
+        if num_edges == n - 1
+            break
+        end
+        if ! in_same_set(tree, sepset.first, sepset.second)
+            union!(tree, sepset.first, sepset.second)
+            push!(output_tree[sepset.first], sepset.second)
+            push!(output_tree[sepset.second], sepset.first)
+            num_edges += 1
+        end
+    end
+    return output_tree
+end
+
+function create_junction_tree(clusters::Array{Set{String}, 1}, node_list::Array{Node, 1})
+    sepsets = create_sepsets(clusters, node_list)
+    return create_junction_tree(clusters, sepsets)
 end
 
 end
