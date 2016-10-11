@@ -200,4 +200,10 @@ function triangulate_graph(g::Dict{String,Set{String}},
     return g2, clusters
 end
 
+function triangulate_graph(node_list::Array{Node,1}, 
+                potential_list::Array{Potential,1})
+    mg = create_moral_graph(node_list, potential_list)
+    return triangulate_graph(mg, node_list)
+end
+
 end
